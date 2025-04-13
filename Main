@@ -1,0 +1,116 @@
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LocalPlayer = Players.LocalPlayer
+
+-- GUI Setup
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "MoneyGui"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 300, 0, 280)
+frame.Position = UDim2.new(0.5, -150, 0.5, -140)
+frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+frame.Parent = screenGui
+
+local uiCorner = Instance.new("UICorner")
+uiCorner.CornerRadius = UDim.new(0, 8)
+uiCorner.Parent = frame
+
+local drag = Instance.new("UIDragDetector")
+drag.Parent = frame
+
+-- Player Name TextBox
+local playerNameBox = Instance.new("TextBox")
+playerNameBox.PlaceholderText = "Enter player name (or 'all'/'me')"
+playerNameBox.Size = UDim2.new(0.9, 0, 0, 30)
+playerNameBox.Position = UDim2.new(0.05, 0, 0.05, 0)
+playerNameBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+playerNameBox.Text = ""
+playerNameBox.ClearTextOnFocus = false
+playerNameBox.Parent = frame
+
+-- Cash TextBox
+local cashBox = Instance.new("TextBox")
+cashBox.PlaceholderText = "Enter cash amount"
+cashBox.Size = UDim2.new(0.9, 0, 0, 30)
+cashBox.Position = UDim2.new(0.05, 0, 0.22, 0)
+cashBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+cashBox.Text = ""
+cashBox.ClearTextOnFocus = false
+cashBox.Parent = frame
+
+-- Multiplier TextBox
+local multiplierBox = Instance.new("TextBox")
+multiplierBox.PlaceholderText = "Multiplier"
+multiplierBox.Size = UDim2.new(0.9, 0, 0, 30)
+multiplierBox.Position = UDim2.new(0.05, 0, 0.39, 0)
+multiplierBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+multiplierBox.Text = ""
+multiplierBox.ClearTextOnFocus = false
+multiplierBox.Parent = frame
+
+-- Button
+local button = Instance.new("TextButton")
+button.Text = "Give Cash"
+button.Size = UDim2.new(0.9, 0, 0, 40)
+button.Position = UDim2.new(0.05, 0, 0.65, 0)
+button.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
+button.TextColor3 = Color3.fromRGB(255, 255, 255)
+button.Parent = frame
+
+-- Function
+button.MouseButton1Click:Connect(function()
+	local inputName = playerNameBox.Text
+	local cashAmount = tonumber(cashBox.Text)
+	local multiplier = tonumber(multiplierBox.Text) or 1
+
+	if inputName == "" or not cashAmount then
+		warn("Invalid input.")
+		return
+	end
+
+	local totalCash = cashAmount * multiplier
+	local remote = ReplicatedStorage:FindFirstChild("MoneyRequest")
+	if not remote then
+		warn("Remote not found.")
+		return
+	end
+
+	if inputName == "all" then
+		for _, plr in ipairs(Players:GetPlayers()) do
+			local args = {
+				[1] = false,
+				[2] = totalCash,
+				[3] = "Cash",
+				[4] = plr
+			}
+			print("Giving", totalCash, "cash to", plr.Name)
+			remote:FireServer(unpack(args))
+		end
+	elseif inputName == "me" then
+		local args = {
+			[1] = false,
+			[2] = totalCash,
+			[3] = "Cash",
+			[4] = LocalPlayer
+		}
+		print("Giving", totalCash, "cash to yourself")
+		remote:FireServer(unpack(args))
+	else
+		local target = Players:FindFirstChild(inputName)
+		if target then
+			local args = {
+				[1] = false,
+				[2] = totalCash,
+				[3] = "Cash",
+				[4] = target
+			}
+			print("Giving", totalCash, "cash to", target.Name)
+			remote:FireServer(unpack(args))
+		else
+			warn("Player not found:", inputName)
+		end
+	end
+end)
